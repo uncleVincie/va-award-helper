@@ -1,6 +1,6 @@
 package com.vincie.com.vincie.model
 
-enum class AwardPercentage(value: Int) {
+enum class AwardPercentage(val value: Int) {
     TEN(10),
     TWENTY(20),
     THIRTY(30),
