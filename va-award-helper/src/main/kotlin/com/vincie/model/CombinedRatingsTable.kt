@@ -2,6 +2,7 @@ package com.vincie.com.vincie.model
 
 /**
  * The lookup table that gives the combined rating given the current rating and the next AwardPercentage
+ * Note to self: never auto-format this bad boy
  */
 class CombinedRatingsTable {
 
@@ -28,8 +29,18 @@ class CombinedRatingsTable {
 
     init {buildMaps()}
 
-    fun combineRating(currentRating: Int, nextRating: Int): Int {
-        return 0
+    fun combineRating(currentRating: Int, nextRating: AwardPercentage): Int? {
+        return when(nextRating) {
+            AwardPercentage.TEN -> map10[currentRating]
+            AwardPercentage.TWENTY -> map20[currentRating]
+            AwardPercentage.THIRTY -> map30[currentRating]
+            AwardPercentage.FORTY -> map40[currentRating]
+            AwardPercentage.FIFTY -> map50[currentRating]
+            AwardPercentage.SIXTY -> map60[currentRating]
+            AwardPercentage.SEVENTY -> map70[currentRating]
+            AwardPercentage.EIGHTY -> map80[currentRating]
+            AwardPercentage.NINETY -> map90[currentRating]
+        }
     }
 
     private fun buildMaps() {
