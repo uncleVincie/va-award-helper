@@ -2,6 +2,8 @@ package com.vincie.com.vincie.model
 
 /**
  * The lookup table that gives the combined rating given the current rating and the next AwardPercentage
+ * Ref: Title 38, Ch 1, Part 4, Subpart A, Table 1 - "Combined Ratings Table"
+ * Also handles the edge case when two ratings of 10% must be combined
  * Note to self: never auto-format this bad boy
  */
 class CombinedRatingsTable {
@@ -30,6 +32,11 @@ class CombinedRatingsTable {
     init {buildMaps()}
 
     fun combineRating(currentRating: Int, nextRating: AwardPercentage): Int? {
+
+        if (currentRating == 10 && nextRating == AwardPercentage.TEN) {
+            return 19 //special edge-case if the claimant has 2 of the lowest possible ratings
+        }
+
         return when(nextRating) {
             AwardPercentage.TEN -> map10[currentRating]
             AwardPercentage.TWENTY -> map20[currentRating]

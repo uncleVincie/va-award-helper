@@ -19,7 +19,11 @@ class CombinedRatingsTableTest {
     @MethodSource("combineRatingsSource")
     fun `combineRating, given valid inputs, returns expected`(currentRating: Int, awardPercentage: AwardPercentage, expected: Int) {
         assertThat(subject.combineRating(currentRating, awardPercentage)).isEqualTo(expected)
-        //TODO parameterize and test several combos, at least one for each map
+    }
+
+    @Test
+    fun `combineRating, given the 10 and 10 edge case, returns 19`() {
+        assertThat(subject.combineRating(10,AwardPercentage.TEN)).isEqualTo(19)
     }
 
     @Test
