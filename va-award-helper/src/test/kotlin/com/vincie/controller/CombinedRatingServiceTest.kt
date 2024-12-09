@@ -96,5 +96,40 @@ class CombinedRatingServiceTest {
         assertThat(subject.calculateFinalRating(input)).isEqualTo(20)
     }
 
-    //TODO write many more hypothetical cases.  Do at least the example in the statute.
+    @Test
+    fun `calculateFinalRating, given the example in 4-25, returns expected`() {
+        val input = listOf(
+            Rating(Extremity.LEFT_ARM,AwardPercentage.FORTY),
+            Rating(Extremity.LEFT_ARM,AwardPercentage.TWENTY),
+            Rating(Extremity.LEFT_ARM,AwardPercentage.SIXTY)
+        )
+
+        assertThat(subject.calculateFinalRating(input)).isEqualTo(80)
+    }
+
+    @Test
+    fun `huntForBilateralFactor, given bilateral list, returns 2nd rating of that type`() {
+        val input = listOf(
+            Rating(Extremity.NOT_APPLICABLE,AwardPercentage.SEVENTY),
+            Rating(Extremity.LEFT_ARM, AwardPercentage.TWENTY),
+            Rating(Extremity.RIGHT_ARM,AwardPercentage.TEN)
+        )
+
+        assertThat(subject.huntForBilateralFactor(input)).containsOnly(
+            Rating(Extremity.RIGHT_ARM,AwardPercentage.TEN)
+        )
+    }
+
+    @Test
+    fun `calculateFinalRating, given example for bilateral factor in 5-1-5-5, returns expected`() {
+        val input = listOf(
+            Rating(Extremity.LEFT_ARM,AwardPercentage.THIRTY),
+            Rating(Extremity.RIGHT_ARM,AwardPercentage.TEN),
+            Rating(Extremity.NOT_APPLICABLE,AwardPercentage.TEN)
+        )
+
+        assertThat(subject.calculateFinalRating(input)).isEqualTo(50)
+    }
+    
+    //TODO report
 }

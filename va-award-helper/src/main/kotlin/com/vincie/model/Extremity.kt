@@ -4,5 +4,6 @@ enum class Extremity {
     LEFT_LEG,
     RIGHT_LEG,
     LEFT_ARM,
-    RIGHT_ARM
+    RIGHT_ARM,
+    NOT_APPLICABLE
 }
