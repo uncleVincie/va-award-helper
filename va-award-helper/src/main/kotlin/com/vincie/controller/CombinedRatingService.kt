@@ -1,7 +1,7 @@
 package com.vincie.com.vincie.controller
 
 import com.vincie.com.vincie.model.CombinedRatingsTable
-import com.vincie.com.vincie.model.Extremity
+import com.vincie.com.vincie.model.Bilateral
 import com.vincie.com.vincie.model.Rating
 import kotlin.math.roundToInt
 
@@ -17,29 +17,32 @@ class CombinedRatingService(
     /**
      * determines if the veteran qualifies for the bilateral factor (disabled in left and right arm or left and right leg)
      * assumes that the bilateral factor is applied after the last award percentage for that extremity (arm or leg)
-     * assumes that ratings are already input in order of awardPercentage
+     * assumes that bilateral ratings are applied to the lowest ratings in the list
      */
     fun huntForBilateralFactor(input: List<Rating>): List<Rating> {
         val bilateralRatings: MutableList<Rating> = mutableListOf()
 
-        val leftArm = input.filter { it.extremity == Extremity.LEFT_ARM }
-        val rightArm = input.filter { it.extremity == Extremity.RIGHT_ARM }
-        val leftLeg = input.filter { it.extremity == Extremity.LEFT_LEG }
-        val rightLeg = input.filter { it.extremity == Extremity.RIGHT_LEG }
+        val leftArm = input.filter { it.bilateral == Bilateral.LEFT_ARM }
+        val rightArm = input.filter { it.bilateral == Bilateral.RIGHT_ARM }
+        val leftLeg = input.filter { it.bilateral == Bilateral.LEFT_LEG }
+        val rightLeg = input.filter { it.bilateral == Bilateral.RIGHT_LEG }
 
         //arm
-        if (leftArm.isNotEmpty() && rightArm.isNotEmpty()) {
-            val combined = (leftArm + rightArm).sortedByDescending { it.awardPercentage.value }
-            bilateralRatings.add(combined.last())
-        }
+        bilateralRatings.addAll(combineRatings(leftArm,rightArm))
 
         //leg
-        if (leftLeg.isNotEmpty() && rightLeg.isNotEmpty()) {
-            val combined = (leftLeg + rightLeg).sortedByDescending { it.awardPercentage.value }
-            bilateralRatings.add(combined.last())
-        }
+        bilateralRatings.addAll(combineRatings(leftLeg,rightLeg))
 
         return bilateralRatings;
+    }
+
+    private fun combineRatings(left: List<Rating>, right: List<Rating>): List<Rating> {
+        if (left.isNotEmpty() && right.isNotEmpty()) {
+            val combined = (left + right).sortedBy { it.awardPercentage.value }
+            val pairs = combined.size / 2
+            return combined.subList(0, pairs)
+        }
+        return listOf()
     }
 
     /**
@@ -58,7 +61,7 @@ class CombinedRatingService(
             if (currentRating == 0) {
                 currentRating = rating.awardPercentage.value
             } else {
-                currentRating =  ratingsTable.combineRating(currentRating,rating.awardPercentage)!!
+                currentRating = ratingsTable.combineRating(currentRating, rating.awardPercentage)!!
                 if (bilateralRatings.contains(rating)) {
                     currentRating = (currentRating * 1.10).toInt()
                 }

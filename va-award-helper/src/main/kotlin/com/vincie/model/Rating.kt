@@ -1,6 +1,6 @@
 package com.vincie.com.vincie.model
 
 data class Rating(
-    val extremity: Extremity,
+    val bilateral: Bilateral,
     val awardPercentage: AwardPercentage
 )

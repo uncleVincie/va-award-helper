@@ -1,9 +1,9 @@
 package com.vincie.com.vincie.model
 
-enum class Extremity {
+enum class Bilateral {
     LEFT_LEG,
     RIGHT_LEG,
     LEFT_ARM,
     RIGHT_ARM,
-    NOT_APPLICABLE
+    NON_BILATERAL
 }
