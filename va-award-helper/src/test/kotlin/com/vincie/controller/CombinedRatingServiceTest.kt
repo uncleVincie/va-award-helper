@@ -131,6 +131,12 @@ class CombinedRatingServiceTest {
             Rating(Bilateral.RIGHT_ARM,AwardPercentage.TEN),
             Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY)
         )
+        assertThat(subject.report).containsExactly(
+            "Looking for bilateral arm ratings...",
+            "2 pairs of bilateral ratings found",
+            "Looking for bilateral leg ratings...",
+            "No bilateral ratings found."
+        )
     }
 
     @Test
@@ -156,9 +162,18 @@ class CombinedRatingServiceTest {
         )
 
         assertThat(subject.calculateFinalRating(input)).isEqualTo(50)
+        assertThat(subject.report).containsExactly(
+            "Looking for bilateral arm ratings...",
+            "1 pairs of bilateral ratings found",
+            "Looking for bilateral leg ratings...",
+            "No bilateral ratings found.",
+            "First rating (most severe) = Rating(bilateral=LEFT_ARM, awardPercentage=THIRTY)",
+            "New combined rating = 37, from adding Rating(bilateral=RIGHT_ARM, awardPercentage=TEN)",
+            "Applying bilateral factor from Rating(bilateral=RIGHT_ARM, awardPercentage=TEN)",
+            "New combined rating = 46, from adding Rating(bilateral=NON_BILATERAL, awardPercentage=TEN)",
+            "Rounding from actual final rating of 46"
+        )
     }
 
-    //TODO add 2 bilateral factors (arm and leg)
     //TODO add 2 bilateral factors (two arms, need to calculate these by hand first)
-    //TODO report
 }

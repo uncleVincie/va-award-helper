@@ -9,6 +9,8 @@ class CombinedRatingService(
     private val ratingsTable: CombinedRatingsTable
 ) {
 
+    val report = mutableListOf<String>()
+
     /**
      * orders ratings by most severe to least, based on the value of the awardPercentage therein
      */
@@ -28,9 +30,11 @@ class CombinedRatingService(
         val rightLeg = input.filter { it.bilateral == Bilateral.RIGHT_LEG }
 
         //arm
+        report.add("Looking for bilateral arm ratings...")
         bilateralRatings.addAll(combineRatings(leftArm,rightArm))
 
         //leg
+        report.add("Looking for bilateral leg ratings...")
         bilateralRatings.addAll(combineRatings(leftLeg,rightLeg))
 
         return bilateralRatings;
@@ -40,8 +44,10 @@ class CombinedRatingService(
         if (left.isNotEmpty() && right.isNotEmpty()) {
             val combined = (left + right).sortedBy { it.awardPercentage.value }
             val pairs = combined.size / 2
+            report.add("$pairs pairs of bilateral ratings found")
             return combined.subList(0, pairs)
         }
+        report.add("No bilateral ratings found.")
         return listOf()
     }
 
@@ -49,6 +55,7 @@ class CombinedRatingService(
      * rounds an Int to the nearest 10's place
      */
     fun finalRounding(input: Int): Int {
+        report.add("Rounding from actual final rating of $input")
         return (input.toDouble() / 10).roundToInt() * 10
     }
 
@@ -60,15 +67,19 @@ class CombinedRatingService(
         for (rating in orderedRatings) {
             if (currentRating == 0) {
                 currentRating = rating.awardPercentage.value
+                report.add("First rating (most severe) = $rating")
             } else {
                 currentRating = ratingsTable.combineRating(currentRating, rating.awardPercentage)!!
+                report.add("New combined rating = $currentRating, from adding $rating")
                 if (bilateralRatings.contains(rating)) {
+                    report.add("Applying bilateral factor from $rating")
                     currentRating = (currentRating * 1.10).toInt()
                 }
-
             }
         }
 
         return finalRounding(currentRating)
     }
+
+    fun printReport() { report.forEach{ println(it) }}
 }
