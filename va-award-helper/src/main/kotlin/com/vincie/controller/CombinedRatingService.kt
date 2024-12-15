@@ -77,8 +77,9 @@ class CombinedRatingService(
                 }
             }
         }
-
-        return finalRounding(currentRating)
+        val finalRoundedRating = finalRounding(currentRating)
+        report.add("To final rating of $finalRoundedRating")
+        return finalRoundedRating
     }
 
     fun printReport() { report.forEach{ println(it) }}
