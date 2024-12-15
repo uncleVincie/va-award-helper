@@ -1,4 +1,4 @@
-package com.vincie.com.vincie.model
+package com.vincie.model
 
 enum class AwardPercentage(val value: Int) {
     TEN(10),

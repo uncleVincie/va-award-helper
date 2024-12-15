@@ -1,8 +1,8 @@
-package com.vincie.com.vincie.controller
+package com.vincie.controller
 
-import com.vincie.com.vincie.model.CombinedRatingsTable
-import com.vincie.com.vincie.model.Bilateral
-import com.vincie.com.vincie.model.Rating
+import com.vincie.model.CombinedRatingsTable
+import com.vincie.model.Bilateral
+import com.vincie.model.Rating
 import kotlin.math.roundToInt
 
 class CombinedRatingService(

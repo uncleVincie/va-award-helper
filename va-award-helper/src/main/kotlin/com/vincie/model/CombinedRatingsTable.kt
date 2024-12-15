@@ -1,4 +1,4 @@
-package com.vincie.com.vincie.model
+package com.vincie.model
 
 /**
  * The lookup table that gives the combined rating given the current rating and the next AwardPercentage

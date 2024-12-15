@@ -1,4 +1,4 @@
-package com.vincie.com.vincie.model
+package com.vincie.model
 
 enum class Bilateral {
     LEFT_LEG,
