@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.0.21"
+    id("org.openjfx.javafxplugin") version "0.1.0"
 }
 
 group = "com.vincie"
@@ -21,4 +22,9 @@ tasks.test {
 
 kotlin {
     jvmToolchain(21)
+}
+
+javafx {
+    version = "21"
+    modules = listOf("javafx.controls")
 }

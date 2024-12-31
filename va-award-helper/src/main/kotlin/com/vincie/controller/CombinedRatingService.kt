@@ -9,7 +9,7 @@ class CombinedRatingService(
     private val ratingsTable: CombinedRatingsTable
 ) {
 
-    val report = mutableListOf<String>()
+    val report = mutableListOf("Starting New Rating Calculation:")
 
     /**
      * orders ratings by most severe to least, based on the value of the awardPercentage therein

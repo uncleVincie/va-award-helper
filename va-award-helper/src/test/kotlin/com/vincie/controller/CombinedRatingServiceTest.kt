@@ -131,6 +131,7 @@ class CombinedRatingServiceTest {
             Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY)
         )
         assertThat(subject.report).containsExactly(
+            "Starting New Rating Calculation:",
             "Looking for bilateral arm ratings...",
             "2 pairs of bilateral ratings found",
             "Looking for bilateral leg ratings...",
@@ -162,6 +163,7 @@ class CombinedRatingServiceTest {
 
         assertThat(subject.calculateFinalRating(input)).isEqualTo(50)
         assertThat(subject.report).containsExactly(
+            "Starting New Rating Calculation:",
             "Looking for bilateral arm ratings...",
             "1 pairs of bilateral ratings found",
             "Looking for bilateral leg ratings...",
