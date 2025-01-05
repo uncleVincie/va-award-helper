@@ -69,7 +69,7 @@ class CombinedRatingService(
                 currentRating = rating.awardPercentage.value
                 report.add("First rating (most severe) = $rating")
             } else {
-                currentRating = ratingsTable.combineRating(currentRating, rating.awardPercentage)!!
+                currentRating = ratingsTable.combineRating(currentRating, rating.awardPercentage)!! //TODO need to handle case when currentRating == 100, as the table will return null
                 report.add("New combined rating = $currentRating, from adding $rating")
                 if (bilateralRatings.contains(rating)) {
                     report.add("Applying bilateral factor from $rating")

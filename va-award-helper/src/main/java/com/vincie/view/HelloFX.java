@@ -16,7 +16,7 @@ public class HelloFX extends Application {
 
         CombinedRatingService service = new CombinedRatingService(new CombinedRatingsTable());
         service.printReport();
-        stage.setScene(new VaAwardHelperScene().createScene());
+        stage.setScene(new VaAwardHelperScene(service).createScene());
         stage.show();
     }
 
