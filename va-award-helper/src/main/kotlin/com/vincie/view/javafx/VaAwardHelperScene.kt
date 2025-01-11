@@ -5,7 +5,9 @@ import com.vincie.model.AwardPercentage
 import com.vincie.model.Bilateral
 import com.vincie.model.Rating
 import javafx.beans.property.IntegerProperty
+import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleIntegerProperty
+import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.geometry.Pos
 import javafx.scene.Node
@@ -21,6 +23,12 @@ class VaAwardHelperScene(
     //state for the ui
     private val ratings = FXCollections.observableArrayList<Rating>()
     private val finalRating: IntegerProperty = SimpleIntegerProperty()
+
+    private val currentNonBilateral: ObjectProperty<AwardPercentage> = SimpleObjectProperty()
+    private val currentBilateralLimbA: ObjectProperty<Bilateral> = SimpleObjectProperty()
+    private val currentBilateralAwardA: ObjectProperty<AwardPercentage> = SimpleObjectProperty()
+    private val currentBilateralLimbB: ObjectProperty<Bilateral> = SimpleObjectProperty()
+    private val currentBilateralAwardB: ObjectProperty<AwardPercentage> = SimpleObjectProperty()
 
     fun createScene() =
         Scene(
@@ -53,43 +61,55 @@ class VaAwardHelperScene(
 
     private fun createNonBilateralBox(): Region {
 
-        return VBox(6.0, Label("Enter Non-Bilateral Award"), createPercentChoiceBox(), createAddButtonNonBilateral())
+        return VBox(6.0, Label("Enter Non-Bilateral Award"), createPercentChoiceBox(currentNonBilateral), createAddButtonNonBilateral())
     }
 
     private fun createBilateralBox(): Region {
-        return VBox(6.0, Label("Enter Bi-Lateral Award"), createSetOfBilateralChoiceBoxes(), createSetOfBilateralChoiceBoxes(), createAddButtonNonBilateral())
+        return VBox(6.0, Label("Enter Bi-Lateral Award"), createSetOfBilateralChoiceBoxes(currentBilateralLimbA, currentBilateralAwardA), createSetOfBilateralChoiceBoxes(currentBilateralLimbB, currentBilateralAwardB), createAddButtonBilateral())
     }
 
-    private fun createSetOfBilateralChoiceBoxes(): Region {
-        return HBox(10.0, createLimbChoiceBox(), createPercentChoiceBox())
+    private fun createSetOfBilateralChoiceBoxes(limb: ObjectProperty<Bilateral>, award: ObjectProperty<AwardPercentage>): Region {
+        return HBox(10.0, createLimbChoiceBox(limb), createPercentChoiceBox(award))
     }
 
-    private fun createPercentChoiceBox(): Node {
+    private fun createPercentChoiceBox(property: ObjectProperty<AwardPercentage>): Node {
         val choiceBox = ChoiceBox<AwardPercentage>()
         choiceBox.items.addAll(AwardPercentage.entries)
+        choiceBox.valueProperty().bindBidirectional(property)
         return choiceBox
     }
 
-    private fun createLimbChoiceBox(): Node {
+    private fun createLimbChoiceBox(property: ObjectProperty<Bilateral>): Node {
         val choiceBox = ChoiceBox<Bilateral>()
         choiceBox.items.add(Bilateral.LEFT_ARM)
         choiceBox.items.add(Bilateral.RIGHT_ARM)
         choiceBox.items.add(Bilateral.LEFT_LEG)
         choiceBox.items.add(Bilateral.RIGHT_LEG)
+        choiceBox.valueProperty().bindBidirectional(property)
         return choiceBox
     }
 
     private fun createAddButtonNonBilateral(): Node {
         return Button("+").also {
             it.setOnAction { evt ->
-                ratings.add(Rating(Bilateral.NON_BILATERAL, AwardPercentage.TEN)) //TODO this is hard-coded, need state for the dropdowns
+                ratings.add(Rating(Bilateral.NON_BILATERAL, currentNonBilateral.get()))
+                finalRating.set(service.calculateFinalRating(ratings)) //auto-unboxing works here, no need to convert to List
+            }
+        }
+    }
+
+    private fun createAddButtonBilateral(): Node {
+        return Button("+").also {
+            it.setOnAction { evt ->
+                ratings.add(Rating(currentBilateralLimbA.get(), currentBilateralAwardA.get()))
+                ratings.add(Rating(currentBilateralLimbB.get(), currentBilateralAwardB.get()))
                 finalRating.set(service.calculateFinalRating(ratings))
             }
         }
     }
 
     private fun createSummaryTable(): Region {
-        //TODO
+        //TODO need to figure out how to remove rows
         val table = TableView<Rating>()
         table.items = ratings
         val bilateralColumn = TableColumn<Rating, String>("Bilateral")
