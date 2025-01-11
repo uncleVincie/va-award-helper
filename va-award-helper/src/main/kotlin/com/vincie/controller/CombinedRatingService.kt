@@ -82,5 +82,8 @@ class CombinedRatingService(
         return finalRoundedRating
     }
 
-    fun printReport() { report.forEach{ println(it) }}
+    fun printReport() {
+        //TODO need to reset this for every new calculation
+        //TODO this should be a file, not sysout
+        report.forEach{ println(it) }}
 }

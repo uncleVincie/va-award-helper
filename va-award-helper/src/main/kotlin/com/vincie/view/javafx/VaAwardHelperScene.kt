@@ -14,6 +14,7 @@ import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.control.*
 import javafx.scene.control.cell.PropertyValueFactory
+import javafx.scene.input.KeyCode
 import javafx.scene.layout.*
 
 class VaAwardHelperScene(
@@ -51,12 +52,12 @@ class VaAwardHelperScene(
 
     private fun createCenter(): Region {
 
-        return VBox(1.0, Label("Summary"), createSummaryTable()).also { it.alignment = Pos.CENTER}
+        return VBox(1.0, Label("Summary"), createSummaryTable(), Label("Select row and hit Backspace to remove a rating")).also { it.alignment = Pos.CENTER}
     }
 
     private fun createBottom(): Region {
 
-        return HBox(20.0, Label("Total: "), createFinalRatingLabel()).also { it.alignment = Pos.CENTER_RIGHT }
+        return HBox(20.0, createPrintReportButton(), Label("Total: "), createFinalRatingLabel()).also { it.alignment = Pos.CENTER_RIGHT }
     }
 
     private fun createNonBilateralBox(): Region {
@@ -93,7 +94,7 @@ class VaAwardHelperScene(
         return Button("+").also {
             it.setOnAction { evt ->
                 ratings.add(Rating(Bilateral.NON_BILATERAL, currentNonBilateral.get()))
-                finalRating.set(service.calculateFinalRating(ratings)) //auto-unboxing works here, no need to convert to List
+                finalRating.set(service.calculateFinalRating(ratings)) //recalculate after non-bilateral addition, auto-unboxing works here, no need to convert to List
             }
         }
     }
@@ -103,13 +104,20 @@ class VaAwardHelperScene(
             it.setOnAction { evt ->
                 ratings.add(Rating(currentBilateralLimbA.get(), currentBilateralAwardA.get()))
                 ratings.add(Rating(currentBilateralLimbB.get(), currentBilateralAwardB.get()))
-                finalRating.set(service.calculateFinalRating(ratings))
+                finalRating.set(service.calculateFinalRating(ratings)) //recalculate after bilateral addition
+            }
+        }
+    }
+
+    private fun createPrintReportButton(): Node {
+        return Button("Print Report").also {
+            it.setOnAction { evt ->
+                service.printReport()
             }
         }
     }
 
     private fun createSummaryTable(): Region {
-        //TODO need to figure out how to remove rows
         val table = TableView<Rating>()
         table.items = ratings
         val bilateralColumn = TableColumn<Rating, String>("Bilateral")
@@ -118,6 +126,15 @@ class VaAwardHelperScene(
         awardColumn.cellValueFactory = PropertyValueFactory("awardPercentage")
 
         table.columns.setAll(bilateralColumn,awardColumn)
+
+        //this block gives ability to remove ratings from summary
+        table.setOnKeyPressed { evt ->
+            if (evt.code == KeyCode.BACK_SPACE && table.selectionModel.selectedItem != null) {
+                ratings.remove(table.selectionModel.selectedItem)
+                finalRating.set(service.calculateFinalRating(ratings)) //recalculate after removal
+            }
+        }
+
         return table
     }
 
