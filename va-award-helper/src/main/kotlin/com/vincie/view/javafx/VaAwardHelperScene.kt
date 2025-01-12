@@ -8,6 +8,8 @@ import javafx.beans.property.IntegerProperty
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.SimpleStringProperty
+import javafx.beans.property.StringProperty
 import javafx.collections.FXCollections
 import javafx.geometry.Pos
 import javafx.scene.Node
@@ -18,6 +20,9 @@ import javafx.scene.input.KeyCode
 import javafx.scene.layout.*
 import javafx.stage.FileChooser
 import javafx.stage.Stage
+
+private const val DEFAULT_WIDTH = 500.0
+private const val DEFAULT_HEIGHT = 800.0
 
 class VaAwardHelperScene(
     private val service: CombinedRatingService,
@@ -34,20 +39,21 @@ class VaAwardHelperScene(
     private val currentBilateralAwardA: ObjectProperty<AwardPercentage> = SimpleObjectProperty()
     private val currentBilateralLimbB: ObjectProperty<Bilateral> = SimpleObjectProperty()
     private val currentBilateralAwardB: ObjectProperty<AwardPercentage> = SimpleObjectProperty()
+    private var message: StringProperty = SimpleStringProperty()
 
 
     fun createScene() =
         Scene(
-            createParentRegion(), 500.0, 800.0
+            createParentRegion(), DEFAULT_WIDTH, DEFAULT_HEIGHT
         )
 
-    private fun createBorderPane() = BorderPane().also {
-        it.top = createTop()
-        it.center = createCenter()
-        it.bottom = createBottom()
+    private fun createParentRegion() = VBox(20.0, createHeader(), createTop(), createCenter(), createBottom(), createMessageCenter()).also {
+        it.stylesheets.add(this.javaClass.getResource("/css/va-scene-style.css").toExternalForm())
     }
 
-    private fun createParentRegion() = VBox(20.0, createTop(), createCenter(), createBottom())
+    private fun createHeader(): Region {
+        return HBox(Label("VA Award Calculator").also { it.styleClass.add("header") }).also { it.alignment = Pos.CENTER }
+    }
 
 
     private fun createTop(): Region {
@@ -57,24 +63,56 @@ class VaAwardHelperScene(
 
     private fun createCenter(): Region {
 
-        return VBox(1.0, Label("Summary"), createSummaryTable(), Label("Select row and hit Backspace to remove a rating")).also { it.alignment = Pos.CENTER}
+        return VBox(
+            1.0,
+            Label("Summary"),
+            createSummaryTable(),
+            Label("Select row and hit Backspace to remove a rating")
+        ).also { it.alignment = Pos.CENTER }
     }
 
     private fun createBottom(): Region {
 
-        return HBox(20.0, createSaveReportButton(), Label("Total: "), createFinalRatingLabel()).also { it.alignment = Pos.CENTER_RIGHT }
+        return HBox(
+            20.0,
+            createSaveReportButton(),
+            Label("Total: "),
+            createFinalRatingLabel(),
+            Label(" ")
+        ).also { it.alignment = Pos.CENTER_RIGHT }
+    }
+
+    private fun createMessageCenter(): Region {
+        return HBox(Label("").also {
+            it.textProperty().bind(message)
+            it.styleClass.add("message")
+        })
     }
 
     private fun createNonBilateralBox(): Region {
 
-        return VBox(6.0, Label("Enter Non-Bilateral Award"), createPercentChoiceBox(currentNonBilateral), createAddButtonNonBilateral())
+        return VBox(
+            6.0,
+            Label("Enter Non-Bilateral Award"),
+            createPercentChoiceBox(currentNonBilateral),
+            createAddButtonNonBilateral()
+        )
     }
 
     private fun createBilateralBox(): Region {
-        return VBox(6.0, Label("Enter Bi-Lateral Award"), createSetOfBilateralChoiceBoxes(currentBilateralLimbA, currentBilateralAwardA), createSetOfBilateralChoiceBoxes(currentBilateralLimbB, currentBilateralAwardB), createAddButtonBilateral())
+        return VBox(
+            6.0,
+            Label("Enter Bi-Lateral Award"),
+            createSetOfBilateralChoiceBoxes(currentBilateralLimbA, currentBilateralAwardA),
+            createSetOfBilateralChoiceBoxes(currentBilateralLimbB, currentBilateralAwardB),
+            createAddButtonBilateral()
+        )
     }
 
-    private fun createSetOfBilateralChoiceBoxes(limb: ObjectProperty<Bilateral>, award: ObjectProperty<AwardPercentage>): Region {
+    private fun createSetOfBilateralChoiceBoxes(
+        limb: ObjectProperty<Bilateral>,
+        award: ObjectProperty<AwardPercentage>
+    ): Region {
         return HBox(10.0, createLimbChoiceBox(limb), createPercentChoiceBox(award))
     }
 
@@ -99,8 +137,11 @@ class VaAwardHelperScene(
         return Button("+").also {
             it.setOnAction { evt ->
                 if (currentNonBilateral.get() != null) {
+                    message.set("")
                     ratings.add(Rating(Bilateral.NON_BILATERAL, currentNonBilateral.get()))
                     finalRating.set(service.calculateFinalRating(ratings)) //recalculate after non-bilateral addition, auto-unboxing works here, no need to convert to List
+                } else {
+                    message.set("Please choose an award value for non-bilateral entry")
                 }
             }
         }
@@ -119,18 +160,23 @@ class VaAwardHelperScene(
     }
 
     private fun isValidBilateral(): Boolean {
-        var valid = false
         if (currentBilateralLimbA.get() == null || currentBilateralLimbB.get() == null || currentBilateralAwardA.get() == null || currentBilateralAwardB.get() == null) {
+            message.set("Please select a value for each of the 4 Bilateral boxes")
             return false
         } else if (currentBilateralLimbA.get() == Bilateral.LEFT_ARM && currentBilateralLimbB.get() != Bilateral.RIGHT_ARM) {
+            message.set("RIGHT_ARM must accompany LEFT_ARM for a valid bilateral rating")
             return false
         } else if (currentBilateralLimbA.get() == Bilateral.RIGHT_ARM && currentBilateralLimbB.get() != Bilateral.LEFT_ARM) {
+            message.set("LEFT_ARM must accompany RIGHT_ARM for a valid bilateral rating")
             return false
         } else if (currentBilateralLimbA.get() == Bilateral.LEFT_LEG && currentBilateralLimbB.get() != Bilateral.RIGHT_LEG) {
+            message.set("RIGHT_LEG must accompany LEFT_LEG for a valid bilateral rating")
             return false
         } else if (currentBilateralLimbA.get() == Bilateral.RIGHT_LEG && currentBilateralLimbB.get() != Bilateral.LEFT_LEG) {
+            message.set("LEFT_LEG must accompany RIGHT_LEG for a valid bilateral rating")
             return false
         }
+        message.set("")
         return true
     }
 
@@ -145,13 +191,18 @@ class VaAwardHelperScene(
 
     private fun createSummaryTable(): Region {
         val table = TableView<Rating>()
+        val columnWidth = DEFAULT_WIDTH / 2 - 1 //padded to prevent scroll bar from showing up
         table.items = ratings
         val bilateralColumn = TableColumn<Rating, String>("Bilateral")
         bilateralColumn.cellValueFactory = PropertyValueFactory("bilateral")
+        bilateralColumn.prefWidth = columnWidth
         val awardColumn = TableColumn<Rating, String>("Award")
         awardColumn.cellValueFactory = PropertyValueFactory("awardPercentage")
+        awardColumn.prefWidth = columnWidth
 
-        table.columns.setAll(bilateralColumn,awardColumn)
+        table.columns.setAll(bilateralColumn, awardColumn)
+        println(bilateralColumn.width)
+        println(awardColumn.width)
 
         //this block gives ability to remove ratings from summary
         table.setOnKeyPressed { evt ->
@@ -165,7 +216,10 @@ class VaAwardHelperScene(
     }
 
     private fun createFinalRatingLabel(): Node {
-        return Label("").also { it.textProperty().bind(finalRating.asString())}
+        return Label("").also {
+            it.textProperty().bind(finalRating.asString())
+            it.styleClass.add("final-rating")
+        }
         //TODO style this
     }
 }
