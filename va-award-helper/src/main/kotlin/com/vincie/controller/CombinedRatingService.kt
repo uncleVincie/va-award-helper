@@ -3,13 +3,18 @@ package com.vincie.controller
 import com.vincie.model.CombinedRatingsTable
 import com.vincie.model.Bilateral
 import com.vincie.model.Rating
+import java.io.File
+import java.io.FileWriter
 import kotlin.math.roundToInt
+
+private const val BILATERAL_MULT = 1.10
 
 class CombinedRatingService(
     private val ratingsTable: CombinedRatingsTable
 ) {
 
-    val report = mutableListOf("Starting New Rating Calculation:")
+    val reportBuffer = mutableListOf<String>()
+    var finalReport = listOf<String>()
 
     /**
      * orders ratings by most severe to least, based on the value of the awardPercentage therein
@@ -30,12 +35,12 @@ class CombinedRatingService(
         val rightLeg = input.filter { it.bilateral == Bilateral.RIGHT_LEG }
 
         //arm
-        report.add("Looking for bilateral arm ratings...")
-        bilateralRatings.addAll(combineRatings(leftArm,rightArm))
+        reportBuffer.add("Looking for bilateral arm ratings...")
+        bilateralRatings.addAll(combineRatings(leftArm, rightArm))
 
         //leg
-        report.add("Looking for bilateral leg ratings...")
-        bilateralRatings.addAll(combineRatings(leftLeg,rightLeg))
+        reportBuffer.add("Looking for bilateral leg ratings...")
+        bilateralRatings.addAll(combineRatings(leftLeg, rightLeg))
 
         return bilateralRatings;
     }
@@ -44,10 +49,10 @@ class CombinedRatingService(
         if (left.isNotEmpty() && right.isNotEmpty()) {
             val combined = (left + right).sortedBy { it.awardPercentage.value }
             val pairs = combined.size / 2
-            report.add("$pairs pairs of bilateral ratings found")
+            reportBuffer.add("$pairs pairs of bilateral ratings found")
             return combined.subList(0, pairs)
         }
-        report.add("No bilateral ratings found.")
+        reportBuffer.add("No bilateral ratings found.")
         return listOf()
     }
 
@@ -55,11 +60,12 @@ class CombinedRatingService(
      * rounds an Int to the nearest 10's place
      */
     fun finalRounding(input: Int): Int {
-        report.add("Rounding from actual final rating of $input")
+        reportBuffer.add("Rounding from actual final rating of $input")
         return (input.toDouble() / 10).roundToInt() * 10
     }
 
     fun calculateFinalRating(input: List<Rating>): Int {
+        reportBuffer.add("Starting New Rating Calculation:")
         var currentRating = 0
         val orderedRatings = orderBySeverity(input)
         val bilateralRatings = huntForBilateralFactor(orderedRatings)
@@ -67,23 +73,50 @@ class CombinedRatingService(
         for (rating in orderedRatings) {
             if (currentRating == 0) {
                 currentRating = rating.awardPercentage.value
-                report.add("First rating (most severe) = $rating")
+                reportBuffer.add("First rating (most severe) = $rating")
             } else {
-                currentRating = ratingsTable.combineRating(currentRating, rating.awardPercentage)!! //TODO need to handle case when currentRating == 100, as the table will return null
-                report.add("New combined rating = $currentRating, from adding $rating")
-                if (bilateralRatings.contains(rating)) {
-                    report.add("Applying bilateral factor from $rating")
-                    currentRating = (currentRating * 1.10).toInt()
+                currentRating = ratingsTable.combineRating(currentRating, rating.awardPercentage)
+                    ?: 100 //if table returns null, then x value was already >= 100
+                reportBuffer.add("New combined rating = $currentRating, from adding $rating")
+                if (bilateralRatings.contains(rating) && currentRating < 100) {
+                    reportBuffer.add("Applying bilateral factor from $rating")
+                    currentRating = (currentRating * BILATERAL_MULT).toInt()
                 }
             }
         }
         val finalRoundedRating = finalRounding(currentRating)
-        report.add("To final rating of $finalRoundedRating")
+        reportBuffer.add("To final rating of $finalRoundedRating")
+        writeReportBuffer()
         return finalRoundedRating
     }
 
+    private fun writeReportBuffer() {
+        finalReport = reportBuffer.toList()
+        reportBuffer.clear()
+    }
+
+    fun saveReport(selectedFile: File) {
+        val fileWriter = FileWriter(appendTxt(selectedFile).absolutePath)
+        val sb = StringBuilder()
+        finalReport.forEach {
+            sb.append(it)
+            sb.append("\n")
+        }
+        println(sb.toString())
+        fileWriter.write(sb.toString())
+        fileWriter.close()
+    }
+
+    private fun appendTxt(file: File): File {
+        return if (file.absolutePath.endsWith(".txt")) {
+            file
+        } else {
+            File(file.absolutePath + ".txt")
+        }
+    }
+
     fun printReport() {
-        //TODO need to reset this for every new calculation
-        //TODO this should be a file, not sysout
-        report.forEach{ println(it) }}
+        finalReport.forEach { println(it) }
+    }
+
 }

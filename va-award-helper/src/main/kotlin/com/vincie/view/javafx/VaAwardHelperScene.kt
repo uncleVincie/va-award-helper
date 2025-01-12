@@ -16,20 +16,25 @@ import javafx.scene.control.*
 import javafx.scene.control.cell.PropertyValueFactory
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.*
+import javafx.stage.FileChooser
+import javafx.stage.Stage
 
 class VaAwardHelperScene(
-    private val service: CombinedRatingService
+    private val service: CombinedRatingService,
+    private val stage: Stage
 ) {
+
+    private val fileChooser = FileChooser().also { it.title = "Save Report" }
 
     //state for the ui
     private val ratings = FXCollections.observableArrayList<Rating>()
     private val finalRating: IntegerProperty = SimpleIntegerProperty()
-
     private val currentNonBilateral: ObjectProperty<AwardPercentage> = SimpleObjectProperty()
     private val currentBilateralLimbA: ObjectProperty<Bilateral> = SimpleObjectProperty()
     private val currentBilateralAwardA: ObjectProperty<AwardPercentage> = SimpleObjectProperty()
     private val currentBilateralLimbB: ObjectProperty<Bilateral> = SimpleObjectProperty()
     private val currentBilateralAwardB: ObjectProperty<AwardPercentage> = SimpleObjectProperty()
+
 
     fun createScene() =
         Scene(
@@ -57,7 +62,7 @@ class VaAwardHelperScene(
 
     private fun createBottom(): Region {
 
-        return HBox(20.0, createPrintReportButton(), Label("Total: "), createFinalRatingLabel()).also { it.alignment = Pos.CENTER_RIGHT }
+        return HBox(20.0, createSaveReportButton(), Label("Total: "), createFinalRatingLabel()).also { it.alignment = Pos.CENTER_RIGHT }
     }
 
     private fun createNonBilateralBox(): Region {
@@ -93,6 +98,7 @@ class VaAwardHelperScene(
     private fun createAddButtonNonBilateral(): Node {
         return Button("+").also {
             it.setOnAction { evt ->
+                //TODO need to check for nulls here or in the service
                 ratings.add(Rating(Bilateral.NON_BILATERAL, currentNonBilateral.get()))
                 finalRating.set(service.calculateFinalRating(ratings)) //recalculate after non-bilateral addition, auto-unboxing works here, no need to convert to List
             }
@@ -102,6 +108,8 @@ class VaAwardHelperScene(
     private fun createAddButtonBilateral(): Node {
         return Button("+").also {
             it.setOnAction { evt ->
+                //TODO need to call a validate method to make sure the bilateral limbs match
+                //TODO need to check for nulls here or in the service
                 ratings.add(Rating(currentBilateralLimbA.get(), currentBilateralAwardA.get()))
                 ratings.add(Rating(currentBilateralLimbB.get(), currentBilateralAwardB.get()))
                 finalRating.set(service.calculateFinalRating(ratings)) //recalculate after bilateral addition
@@ -109,10 +117,11 @@ class VaAwardHelperScene(
         }
     }
 
-    private fun createPrintReportButton(): Node {
-        return Button("Print Report").also {
+    private fun createSaveReportButton(): Node {
+        return Button("Save Report").also {
             it.setOnAction { evt ->
-                service.printReport()
+                val selectedFile = fileChooser.showSaveDialog(stage)
+                service.saveReport(selectedFile)
             }
         }
     }

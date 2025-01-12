@@ -104,6 +104,17 @@ class CombinedRatingServiceTest {
     }
 
     @Test
+    fun `calculateFinalRating, given ratings that total over 100, returns 100`() {
+        val input = listOf(
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.NINETY),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.NINETY),
+            Rating(Bilateral.LEFT_ARM, AwardPercentage.NINETY)
+        )
+
+        assertThat(subject.calculateFinalRating(input)).isEqualTo(100)
+    }
+
+    @Test
     fun `huntForBilateralFactor, given bilateral list, returns 2nd rating of that type`() {
         val input = listOf(
             Rating(Bilateral.NON_BILATERAL, AwardPercentage.SEVENTY),
@@ -130,8 +141,7 @@ class CombinedRatingServiceTest {
             Rating(Bilateral.RIGHT_ARM, AwardPercentage.TEN),
             Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY)
         )
-        assertThat(subject.report).containsExactly(
-            "Starting New Rating Calculation:",
+        assertThat(subject.reportBuffer).containsExactly(
             "Looking for bilateral arm ratings...",
             "2 pairs of bilateral ratings found",
             "Looking for bilateral leg ratings...",
@@ -162,7 +172,7 @@ class CombinedRatingServiceTest {
         )
 
         assertThat(subject.calculateFinalRating(input)).isEqualTo(50)
-        assertThat(subject.report).containsExactly(
+        assertThat(subject.finalReport).containsExactly(
             "Starting New Rating Calculation:",
             "Looking for bilateral arm ratings...",
             "1 pairs of bilateral ratings found",
@@ -175,7 +185,32 @@ class CombinedRatingServiceTest {
             "Rounding from actual final rating of 46",
             "To final rating of 50"
         )
-        subject.printReport()
+    }
+
+    @Test
+    fun `calculateFinalRating, having been called multiple times, report only contains last calculation`() {
+        val input1 = listOf(
+            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TWENTY)
+        )
+
+        val input2 = listOf(
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.SEVENTY)
+        )
+
+        subject.calculateFinalRating(input1)
+        subject.calculateFinalRating(input2)
+
+        assertThat(subject.finalReport).containsExactly(
+            "Starting New Rating Calculation:",
+            "Looking for bilateral arm ratings...",
+            "No bilateral ratings found.",
+            "Looking for bilateral leg ratings...",
+            "No bilateral ratings found.",
+            "First rating (most severe) = Rating(bilateral=NON_BILATERAL, awardPercentage=SEVENTY)",
+            "Rounding from actual final rating of 70",
+            "To final rating of 70"
+        )
     }
 
     //TODO add 2 bilateral factors (two arms, need to calculate these by hand first)
