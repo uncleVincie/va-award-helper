@@ -98,9 +98,10 @@ class VaAwardHelperScene(
     private fun createAddButtonNonBilateral(): Node {
         return Button("+").also {
             it.setOnAction { evt ->
-                //TODO need to check for nulls here or in the service
-                ratings.add(Rating(Bilateral.NON_BILATERAL, currentNonBilateral.get()))
-                finalRating.set(service.calculateFinalRating(ratings)) //recalculate after non-bilateral addition, auto-unboxing works here, no need to convert to List
+                if (currentNonBilateral.get() != null) {
+                    ratings.add(Rating(Bilateral.NON_BILATERAL, currentNonBilateral.get()))
+                    finalRating.set(service.calculateFinalRating(ratings)) //recalculate after non-bilateral addition, auto-unboxing works here, no need to convert to List
+                }
             }
         }
     }
@@ -108,13 +109,29 @@ class VaAwardHelperScene(
     private fun createAddButtonBilateral(): Node {
         return Button("+").also {
             it.setOnAction { evt ->
-                //TODO need to call a validate method to make sure the bilateral limbs match
-                //TODO need to check for nulls here or in the service
-                ratings.add(Rating(currentBilateralLimbA.get(), currentBilateralAwardA.get()))
-                ratings.add(Rating(currentBilateralLimbB.get(), currentBilateralAwardB.get()))
-                finalRating.set(service.calculateFinalRating(ratings)) //recalculate after bilateral addition
+                if (isValidBilateral()) {
+                    ratings.add(Rating(currentBilateralLimbA.get(), currentBilateralAwardA.get()))
+                    ratings.add(Rating(currentBilateralLimbB.get(), currentBilateralAwardB.get()))
+                    finalRating.set(service.calculateFinalRating(ratings)) //recalculate after bilateral addition
+                }
             }
         }
+    }
+
+    private fun isValidBilateral(): Boolean {
+        var valid = false
+        if (currentBilateralLimbA.get() == null || currentBilateralLimbB.get() == null || currentBilateralAwardA.get() == null || currentBilateralAwardB.get() == null) {
+            return false
+        } else if (currentBilateralLimbA.get() == Bilateral.LEFT_ARM && currentBilateralLimbB.get() != Bilateral.RIGHT_ARM) {
+            return false
+        } else if (currentBilateralLimbA.get() == Bilateral.RIGHT_ARM && currentBilateralLimbB.get() != Bilateral.LEFT_ARM) {
+            return false
+        } else if (currentBilateralLimbA.get() == Bilateral.LEFT_LEG && currentBilateralLimbB.get() != Bilateral.RIGHT_LEG) {
+            return false
+        } else if (currentBilateralLimbA.get() == Bilateral.RIGHT_LEG && currentBilateralLimbB.get() != Bilateral.LEFT_LEG) {
+            return false
+        }
+        return true
     }
 
     private fun createSaveReportButton(): Node {
