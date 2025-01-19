@@ -152,8 +152,13 @@ class VaAwardHelperScene(
         return Button("+").also {
             it.setOnAction { evt ->
                 if (isValidBilateral()) {
-                    ratings.add(Rating(currentBilateralLimbA.get(), currentBilateralAwardA.get()))
-                    ratings.add(Rating(currentBilateralLimbB.get(), currentBilateralAwardB.get()))
+                    val ratingA = Rating(currentBilateralLimbA.get(), currentBilateralAwardA.get())
+                    val ratingB = Rating(currentBilateralLimbB.get(), currentBilateralAwardB.get())
+                    service.reduceBilateralPair(ratingA, ratingB)
+                    ratings.add(ratingA)
+                    ratings.add(ratingB)
+                    //TODO have to figure out how to handle removing ratings
+                    //TODO have to figure out how to handle the dynamic recalculations (will clear the bilateralSum)
                     finalRating.set(service.calculateFinalRating(ratings)) //recalculate after bilateral addition
                 }
             }

@@ -5,5 +5,6 @@ enum class Bilateral {
     RIGHT_LEG,
     LEFT_ARM,
     RIGHT_ARM,
-    NON_BILATERAL
+    NON_BILATERAL,
+    APPLIED_BILATERAL
 }

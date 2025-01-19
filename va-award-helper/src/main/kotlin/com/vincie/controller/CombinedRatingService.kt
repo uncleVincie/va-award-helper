@@ -1,11 +1,13 @@
 package com.vincie.controller
 
-import com.vincie.model.CombinedRatingsTable
-import com.vincie.model.Bilateral
-import com.vincie.model.Rating
+import com.vincie.model.*
 import java.io.File
 import java.io.FileWriter
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.round
 import kotlin.math.roundToInt
+import kotlin.time.times
 
 private const val BILATERAL_MULT = 1.10
 
@@ -16,51 +18,32 @@ class CombinedRatingService(
     val reportBuffer = mutableListOf<String>()
     var finalReport = listOf<String>()
 
+    private var bilateralSum = 0.0
+
     /**
      * orders ratings by most severe to least, based on the value of the awardPercentage therein
      */
     fun orderBySeverity(input: List<Rating>): List<Rating> = input.sortedByDescending { it.awardPercentage.value }
 
     /**
-     * determines if the veteran qualifies for the bilateral factor (disabled in left and right arm or left and right leg)
-     * assumes that the bilateral factor is applied after the last award percentage for that extremity (arm or leg)
-     * assumes that bilateral ratings are applied to the lowest ratings in the list
+     * takes a pair of ratings, orders them by severity, combines their ratings, then multiplies by the bilateral factor.
+     * @return a new rating with a special bilateral designation (for the front-end's sake) and an award percentage rounded to 10's place so that it can be looked up again in the table.
      */
-    fun huntForBilateralFactor(input: List<Rating>): List<Rating> {
-        val bilateralRatings: MutableList<Rating> = mutableListOf()
-
-        val leftArm = input.filter { it.bilateral == Bilateral.LEFT_ARM }
-        val rightArm = input.filter { it.bilateral == Bilateral.RIGHT_ARM }
-        val leftLeg = input.filter { it.bilateral == Bilateral.LEFT_LEG }
-        val rightLeg = input.filter { it.bilateral == Bilateral.RIGHT_LEG }
-
-        //arm
-        reportBuffer.add("Looking for bilateral arm ratings...")
-        bilateralRatings.addAll(combineRatings(leftArm, rightArm))
-
-        //leg
-        reportBuffer.add("Looking for bilateral leg ratings...")
-        bilateralRatings.addAll(combineRatings(leftLeg, rightLeg))
-
-        return bilateralRatings;
-    }
-
-    private fun combineRatings(left: List<Rating>, right: List<Rating>): List<Rating> {
-        if (left.isNotEmpty() && right.isNotEmpty()) {
-            val combined = (left + right).sortedBy { it.awardPercentage.value }
-            val pairs = combined.size / 2
-            reportBuffer.add("$pairs pairs of bilateral ratings found")
-            return combined.subList(0, pairs)
-        }
-        reportBuffer.add("No bilateral ratings found.")
-        return listOf()
+    fun reduceBilateralPair(left: Rating, right: Rating) {
+        reportBuffer.add("Calculating bilateral factor for $left and $right")
+        val orderedRatings = orderBySeverity(listOf(left, right))
+        val combinedRating = ratingsTable.combineRating(orderedRatings[0].awardPercentage.value, orderedRatings[1].awardPercentage) ?: 0
+        reportBuffer.add("Combined rating for this bilateral pair WITHOUT multiplier is $combinedRating")
+        val bilateralPoints = round(combinedRating*(BILATERAL_MULT-1)*10)/10
+        reportBuffer.add("Bilateral factor gives an extra $bilateralPoints %")
+        bilateralSum += bilateralPoints
     }
 
     /**
      * rounds an Int to the nearest 10's place
      */
     fun finalRounding(input: Int): Int {
-        reportBuffer.add("Rounding from actual final rating of $input")
+        reportBuffer.add("Rounding from actual rating of $input")
         return (input.toDouble() / 10).roundToInt() * 10
     }
 
@@ -68,7 +51,6 @@ class CombinedRatingService(
         reportBuffer.add("Starting New Rating Calculation:")
         var currentRating = 0
         val orderedRatings = orderBySeverity(input)
-        val bilateralRatings = huntForBilateralFactor(orderedRatings)
 
         for (rating in orderedRatings) {
             if (currentRating == 0) {
@@ -78,15 +60,14 @@ class CombinedRatingService(
                 currentRating = ratingsTable.combineRating(currentRating, rating.awardPercentage)
                     ?: 100 //if table returns null, then x value was already >= 100
                 reportBuffer.add("New combined rating = $currentRating, from adding $rating")
-                if (bilateralRatings.contains(rating) && currentRating < 100) {
-                    reportBuffer.add("Applying bilateral factor from $rating")
-                    currentRating = (currentRating * BILATERAL_MULT).toInt()
-                }
             }
         }
+        reportBuffer.add("Adding sum of all bilateral factors ($bilateralSum)")
+        currentRating += bilateralSum.roundToInt()
         val finalRoundedRating = finalRounding(currentRating)
         reportBuffer.add("To final rating of $finalRoundedRating")
         writeReportBuffer()
+        bilateralSum = 0.0
         return finalRoundedRating
     }
 

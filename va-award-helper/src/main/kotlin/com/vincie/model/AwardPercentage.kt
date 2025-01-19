@@ -9,5 +9,9 @@ enum class AwardPercentage(val value: Int) {
     SIXTY(60),
     SEVENTY(70),
     EIGHTY(80),
-    NINETY(90)
+    NINETY(90);
+
+    companion object {
+        fun fromInt(value: Int) = entries.first { it.value == value }
+    }
 }

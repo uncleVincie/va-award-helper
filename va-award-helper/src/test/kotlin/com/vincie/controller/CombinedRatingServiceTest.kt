@@ -115,55 +115,6 @@ class CombinedRatingServiceTest {
     }
 
     @Test
-    fun `huntForBilateralFactor, given bilateral list, returns 2nd rating of that type`() {
-        val input = listOf(
-            Rating(Bilateral.NON_BILATERAL, AwardPercentage.SEVENTY),
-            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY),
-            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TEN)
-        )
-
-        assertThat(subject.huntForBilateralFactor(input)).containsOnly(
-            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TEN)
-        )
-    }
-
-    @Test
-    fun `huntForBilateralFactor, given bilateral list with 2 pairs, returns 2 ratings`() {
-        val input = listOf(
-            Rating(Bilateral.NON_BILATERAL, AwardPercentage.SEVENTY),
-            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY),
-            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TEN),
-            Rating(Bilateral.LEFT_ARM, AwardPercentage.FIFTY),
-            Rating(Bilateral.RIGHT_ARM, AwardPercentage.FORTY)
-        )
-
-        assertThat(subject.huntForBilateralFactor(input)).containsOnly(
-            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TEN),
-            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY)
-        )
-        assertThat(subject.reportBuffer).containsExactly(
-            "Looking for bilateral arm ratings...",
-            "2 pairs of bilateral ratings found",
-            "Looking for bilateral leg ratings...",
-            "No bilateral ratings found."
-        )
-    }
-
-    @Test
-    fun `huntForBilateralFactor, given no bilaterals, returns empty`() {
-        val input = listOf(
-            Rating(Bilateral.NON_BILATERAL, AwardPercentage.SEVENTY),
-            Rating(Bilateral.NON_BILATERAL, AwardPercentage.FORTY),
-            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY),
-            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY),
-            Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN),
-            Rating(Bilateral.LEFT_LEG, AwardPercentage.FIFTY)
-        )
-
-        assertThat(subject.huntForBilateralFactor(input)).isEmpty()
-    }
-
-    @Test
     fun `calculateFinalRating, given example for bilateral factor in 5-1-5-5, returns expected`() {
         val input = listOf(
             Rating(Bilateral.LEFT_ARM, AwardPercentage.THIRTY),
@@ -215,13 +166,49 @@ class CombinedRatingServiceTest {
 
     @Test
     fun `calculateFinalRating, real-world rating decision A, returns 90`() {
+        subject.reduceBilateralPair(
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.FIFTY),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN)
+        )
 
+        subject.reduceBilateralPair(
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.THIRTY),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN)
+        )
+
+        val input = listOf(
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.TWENTY),
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.TEN),
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.FIFTY),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN),
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.THIRTY),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN)
+        )
+
+        val actual = subject.calculateFinalRating(input)
+        subject.printReport()
+        assertThat(actual).isEqualTo(90)
     }
 
     @Test
     fun `calculateFinalRating, real-world rating decision B, returns 90`() {
-        
+        subject.reduceBilateralPair(
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TWENTY),
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN)
+        )
+
+        val input = listOf(
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.SEVENTY),
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.FIFTY),
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.TWENTY),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TWENTY),
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN)
+        )
+        val actual = subject.calculateFinalRating(input)
+        subject.printReport()
+        assertThat(actual).isEqualTo(90)
     }
 
-    //TODO add 2 bilateral factors (two arms, need to calculate these by hand first)
+    //TODO test reduce bilateral factor function
+    //TODO test that multiple hits clear the bilateral sum
 }
