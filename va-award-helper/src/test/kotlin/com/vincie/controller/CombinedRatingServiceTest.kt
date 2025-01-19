@@ -213,5 +213,15 @@ class CombinedRatingServiceTest {
         )
     }
 
+    @Test
+    fun `calculateFinalRating, real-world rating decision A, returns 90`() {
+
+    }
+
+    @Test
+    fun `calculateFinalRating, real-world rating decision B, returns 90`() {
+        
+    }
+
     //TODO add 2 bilateral factors (two arms, need to calculate these by hand first)
 }

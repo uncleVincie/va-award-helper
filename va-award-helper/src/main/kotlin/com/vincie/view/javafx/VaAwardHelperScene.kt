@@ -75,6 +75,7 @@ class VaAwardHelperScene(
 
         return HBox(
             20.0,
+            createClearAllButton(),
             createSaveReportButton(),
             Label("Total: "),
             createFinalRatingLabel(),
@@ -185,6 +186,14 @@ class VaAwardHelperScene(
             it.setOnAction { evt ->
                 val selectedFile = fileChooser.showSaveDialog(stage)
                 service.saveReport(selectedFile)
+            }
+        }
+    }
+
+    private fun createClearAllButton(): Node {
+        return Button("Clear All").also {
+            it.setOnAction { evt ->
+                ratings.clear()
             }
         }
     }
