@@ -2,7 +2,8 @@ package com.vincie.model
 
 data class Rating(
     val bilateral: Bilateral,
-    val awardPercentage: AwardPercentage
+    val awardPercentage: AwardPercentage,
+    val bilateralId: Int = 0
 ) {
 
     companion object {

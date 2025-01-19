@@ -40,6 +40,7 @@ class VaAwardHelperScene(
     private val currentBilateralLimbB: ObjectProperty<Bilateral> = SimpleObjectProperty()
     private val currentBilateralAwardB: ObjectProperty<AwardPercentage> = SimpleObjectProperty()
     private var message: StringProperty = SimpleStringProperty()
+    private var currentBilateralId = 1
 
 
     fun createScene() =
@@ -152,13 +153,11 @@ class VaAwardHelperScene(
         return Button("+").also {
             it.setOnAction { evt ->
                 if (isValidBilateral()) {
-                    val ratingA = Rating(currentBilateralLimbA.get(), currentBilateralAwardA.get())
-                    val ratingB = Rating(currentBilateralLimbB.get(), currentBilateralAwardB.get())
-                    service.reduceBilateralPair(ratingA, ratingB)
+                    val ratingA = Rating(currentBilateralLimbA.get(), currentBilateralAwardA.get(), currentBilateralId)
+                    val ratingB = Rating(currentBilateralLimbB.get(), currentBilateralAwardB.get(), currentBilateralId)
                     ratings.add(ratingA)
                     ratings.add(ratingB)
-                    //TODO have to figure out how to handle removing ratings
-                    //TODO have to figure out how to handle the dynamic recalculations (will clear the bilateralSum)
+                    currentBilateralId++
                     finalRating.set(service.calculateFinalRating(ratings)) //recalculate after bilateral addition
                 }
             }
@@ -205,7 +204,7 @@ class VaAwardHelperScene(
 
     private fun createSummaryTable(): Region {
         val table = TableView<Rating>()
-        val columnWidth = DEFAULT_WIDTH / 2 - 1 //padded to prevent scroll bar from showing up
+        val columnWidth = DEFAULT_WIDTH / 3 - 1 //padded to prevent scroll bar from showing up
         table.items = ratings
         val bilateralColumn = TableColumn<Rating, String>("Bilateral")
         bilateralColumn.cellValueFactory = PropertyValueFactory("bilateral")
@@ -213,10 +212,11 @@ class VaAwardHelperScene(
         val awardColumn = TableColumn<Rating, String>("Award")
         awardColumn.cellValueFactory = PropertyValueFactory("awardPercentage")
         awardColumn.prefWidth = columnWidth
+        val idColumn = TableColumn<Rating, Int>("Bilateral Pair")
+        idColumn.cellValueFactory = PropertyValueFactory("bilateralId")
+        idColumn.prefWidth = columnWidth
 
-        table.columns.setAll(bilateralColumn, awardColumn)
-        println(bilateralColumn.width)
-        println(awardColumn.width)
+        table.columns.setAll(bilateralColumn, awardColumn, idColumn)
 
         //this block gives ability to remove ratings from summary
         table.setOnKeyPressed { evt ->

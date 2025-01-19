@@ -1,13 +1,11 @@
 package com.vincie.controller
 
-import com.vincie.model.*
+import com.vincie.model.CombinedRatingsTable
+import com.vincie.model.Rating
 import java.io.File
 import java.io.FileWriter
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.round
 import kotlin.math.roundToInt
-import kotlin.time.times
 
 private const val BILATERAL_MULT = 1.10
 
@@ -15,10 +13,8 @@ class CombinedRatingService(
     private val ratingsTable: CombinedRatingsTable
 ) {
 
-    val reportBuffer = mutableListOf<String>()
+    private val reportBuffer = mutableListOf<String>()
     var finalReport = listOf<String>()
-
-    private var bilateralSum = 0.0
 
     /**
      * orders ratings by most severe to least, based on the value of the awardPercentage therein
@@ -27,16 +23,37 @@ class CombinedRatingService(
 
     /**
      * takes a pair of ratings, orders them by severity, combines their ratings, then multiplies by the bilateral factor.
-     * @return a new rating with a special bilateral designation (for the front-end's sake) and an award percentage rounded to 10's place so that it can be looked up again in the table.
+     * @return the bilateral multiplier percentage points as a double
      */
-    fun reduceBilateralPair(left: Rating, right: Rating) {
+    fun calculateBilateralKicker(left: Rating, right: Rating): Double {
         reportBuffer.add("Calculating bilateral factor for $left and $right")
         val orderedRatings = orderBySeverity(listOf(left, right))
         val combinedRating = ratingsTable.combineRating(orderedRatings[0].awardPercentage.value, orderedRatings[1].awardPercentage) ?: 0
         reportBuffer.add("Combined rating for this bilateral pair WITHOUT multiplier is $combinedRating")
         val bilateralPoints = round(combinedRating*(BILATERAL_MULT-1)*10)/10
         reportBuffer.add("Bilateral factor gives an extra $bilateralPoints %")
-        bilateralSum += bilateralPoints
+        return bilateralPoints
+    }
+
+    /**
+     * assumes already sorted such that the last unique id in the list is the 2nd to be processed
+     */
+    fun huntForBilaterals(input: List<Rating>): Double {
+        var bilateralSum = 0.0
+
+        val validBilaterals = input.filter { it.bilateralId > 0 }
+        println(validBilaterals)
+        val alreadyProcessed = mutableListOf<Int>()
+        for (rating in validBilaterals) {
+            if (!alreadyProcessed.contains(rating.bilateralId)) {
+                val match: Rating = validBilaterals.last { it.bilateralId == rating.bilateralId }
+                bilateralSum += calculateBilateralKicker(rating, match)
+                alreadyProcessed.add(match.bilateralId)
+                println("already processed: $alreadyProcessed")
+            }
+        }
+
+        return bilateralSum
     }
 
     /**
@@ -50,7 +67,9 @@ class CombinedRatingService(
     fun calculateFinalRating(input: List<Rating>): Int {
         reportBuffer.add("Starting New Rating Calculation:")
         var currentRating = 0
+
         val orderedRatings = orderBySeverity(input)
+        val bilateralSum = huntForBilaterals(orderedRatings)
 
         for (rating in orderedRatings) {
             if (currentRating == 0) {
@@ -67,7 +86,6 @@ class CombinedRatingService(
         val finalRoundedRating = finalRounding(currentRating)
         reportBuffer.add("To final rating of $finalRoundedRating")
         writeReportBuffer()
-        bilateralSum = 0.0
         return finalRoundedRating
     }
 

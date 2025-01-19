@@ -166,23 +166,14 @@ class CombinedRatingServiceTest {
 
     @Test
     fun `calculateFinalRating, real-world rating decision A, returns 90`() {
-        subject.reduceBilateralPair(
-            Rating(Bilateral.LEFT_LEG, AwardPercentage.FIFTY),
-            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN)
-        )
-
-        subject.reduceBilateralPair(
-            Rating(Bilateral.LEFT_LEG, AwardPercentage.THIRTY),
-            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN)
-        )
 
         val input = listOf(
             Rating(Bilateral.NON_BILATERAL, AwardPercentage.TWENTY),
             Rating(Bilateral.NON_BILATERAL, AwardPercentage.TEN),
-            Rating(Bilateral.LEFT_LEG, AwardPercentage.FIFTY),
-            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN),
-            Rating(Bilateral.LEFT_LEG, AwardPercentage.THIRTY),
-            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN)
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.FIFTY, 1),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN, 1),
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.THIRTY, 2),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN, 2)
         )
 
         val actual = subject.calculateFinalRating(input)
@@ -192,17 +183,13 @@ class CombinedRatingServiceTest {
 
     @Test
     fun `calculateFinalRating, real-world rating decision B, returns 90`() {
-        subject.reduceBilateralPair(
-            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TWENTY),
-            Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN)
-        )
 
         val input = listOf(
             Rating(Bilateral.NON_BILATERAL, AwardPercentage.SEVENTY),
             Rating(Bilateral.NON_BILATERAL, AwardPercentage.FIFTY),
             Rating(Bilateral.NON_BILATERAL, AwardPercentage.TWENTY),
-            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TWENTY),
-            Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN)
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TWENTY, 1),
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN, 1)
         )
         val actual = subject.calculateFinalRating(input)
         subject.printReport()
