@@ -42,14 +42,14 @@ class CombinedRatingService(
         var bilateralSum = 0.0
 
         val validBilaterals = input.filter { it.bilateralId > 0 }
-        println(validBilaterals)
         val alreadyProcessed = mutableListOf<Int>()
         for (rating in validBilaterals) {
             if (!alreadyProcessed.contains(rating.bilateralId)) {
                 val match: Rating = validBilaterals.last { it.bilateralId == rating.bilateralId }
-                bilateralSum += calculateBilateralKicker(rating, match)
+                if (match != rating) {
+                    bilateralSum += calculateBilateralKicker(rating, match)
+                }
                 alreadyProcessed.add(match.bilateralId)
-                println("already processed: $alreadyProcessed")
             }
         }
 
@@ -101,7 +101,6 @@ class CombinedRatingService(
             sb.append(it)
             sb.append("\n")
         }
-        println(sb.toString())
         fileWriter.write(sb.toString())
         fileWriter.close()
     }

@@ -14,7 +14,14 @@ public class HelloFX extends Application {
 
         CombinedRatingService service = new CombinedRatingService(new CombinedRatingsTable());
         stage.setScene(new VaAwardHelperScene(service, stage).createScene());
-        stage.getIcons().add(new Image(HelloFX.class.getResourceAsStream("/icon.png")));
+        stage.getIcons().add(new Image(HelloFX.class.getResourceAsStream("/typescript-logo-24.png")));
+        stage.getIcons().add(new Image(HelloFX.class.getResourceAsStream("/typescript-logo-36.png")));
+        stage.getIcons().add(new Image(HelloFX.class.getResourceAsStream("/typescript-logo-48.png")));
+        stage.getIcons().add(new Image(HelloFX.class.getResourceAsStream("/typescript-logo-60.png")));
+        stage.getIcons().add(new Image(HelloFX.class.getResourceAsStream("/typescript-logo-72.png")));
+        stage.getIcons().add(new Image(HelloFX.class.getResourceAsStream("/typescript-logo-84.png")));
+        stage.getIcons().add(new Image(HelloFX.class.getResourceAsStream("/typescript-logo-96.png")));
+        stage.getIcons().add(new Image(HelloFX.class.getResourceAsStream("/typescript-logo-108.png")));
         stage.show();
     }
 

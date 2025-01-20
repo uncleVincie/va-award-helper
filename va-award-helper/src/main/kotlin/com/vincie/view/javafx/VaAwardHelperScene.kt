@@ -234,6 +234,5 @@ class VaAwardHelperScene(
             it.textProperty().bind(finalRating.asString())
             it.styleClass.add("final-rating")
         }
-        //TODO style this
     }
 }

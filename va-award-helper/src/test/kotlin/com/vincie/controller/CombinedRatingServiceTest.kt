@@ -1,8 +1,8 @@
 package com.vincie.controller
 
 import com.vincie.model.AwardPercentage
-import com.vincie.model.CombinedRatingsTable
 import com.vincie.model.Bilateral
+import com.vincie.model.CombinedRatingsTable
 import com.vincie.model.Rating
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -117,23 +117,24 @@ class CombinedRatingServiceTest {
     @Test
     fun `calculateFinalRating, given example for bilateral factor in 5-1-5-5, returns expected`() {
         val input = listOf(
-            Rating(Bilateral.LEFT_ARM, AwardPercentage.THIRTY),
-            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TEN),
-            Rating(Bilateral.NON_BILATERAL, AwardPercentage.TEN)
+            Rating(Bilateral.LEFT_ARM, AwardPercentage.THIRTY, 1),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TEN, 1),
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.TEN, 0)
         )
 
-        assertThat(subject.calculateFinalRating(input)).isEqualTo(50)
+        val actual = subject.calculateFinalRating(input)
+        subject.printReport()
+        assertThat(actual).isEqualTo(50)
         assertThat(subject.finalReport).containsExactly(
             "Starting New Rating Calculation:",
-            "Looking for bilateral arm ratings...",
-            "1 pairs of bilateral ratings found",
-            "Looking for bilateral leg ratings...",
-            "No bilateral ratings found.",
-            "First rating (most severe) = Rating(bilateral=LEFT_ARM, awardPercentage=THIRTY)",
-            "New combined rating = 37, from adding Rating(bilateral=RIGHT_ARM, awardPercentage=TEN)",
-            "Applying bilateral factor from Rating(bilateral=RIGHT_ARM, awardPercentage=TEN)",
-            "New combined rating = 46, from adding Rating(bilateral=NON_BILATERAL, awardPercentage=TEN)",
-            "Rounding from actual final rating of 46",
+            "Calculating bilateral factor for Rating(bilateral=LEFT_ARM, awardPercentage=THIRTY, bilateralId=1) and Rating(bilateral=RIGHT_ARM, awardPercentage=TEN, bilateralId=1)",
+            "Combined rating for this bilateral pair WITHOUT multiplier is 37",
+            "Bilateral factor gives an extra 3.7 %",
+            "First rating (most severe) = Rating(bilateral=LEFT_ARM, awardPercentage=THIRTY, bilateralId=1)",
+            "New combined rating = 37, from adding Rating(bilateral=RIGHT_ARM, awardPercentage=TEN, bilateralId=1)",
+            "New combined rating = 43, from adding Rating(bilateral=NON_BILATERAL, awardPercentage=TEN, bilateralId=0)",
+            "Adding sum of all bilateral factors (3.7)",
+            "Rounding from actual rating of 47",
             "To final rating of 50"
         )
     }
@@ -141,8 +142,8 @@ class CombinedRatingServiceTest {
     @Test
     fun `calculateFinalRating, having been called multiple times, report only contains last calculation`() {
         val input1 = listOf(
-            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY),
-            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TWENTY)
+            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY, 1),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TWENTY, 1)
         )
 
         val input2 = listOf(
@@ -154,12 +155,9 @@ class CombinedRatingServiceTest {
 
         assertThat(subject.finalReport).containsExactly(
             "Starting New Rating Calculation:",
-            "Looking for bilateral arm ratings...",
-            "No bilateral ratings found.",
-            "Looking for bilateral leg ratings...",
-            "No bilateral ratings found.",
-            "First rating (most severe) = Rating(bilateral=NON_BILATERAL, awardPercentage=SEVENTY)",
-            "Rounding from actual final rating of 70",
+            "First rating (most severe) = Rating(bilateral=NON_BILATERAL, awardPercentage=SEVENTY, bilateralId=0)",
+            "Adding sum of all bilateral factors (0.0)",
+            "Rounding from actual rating of 70",
             "To final rating of 70"
         )
     }
@@ -196,6 +194,45 @@ class CombinedRatingServiceTest {
         assertThat(actual).isEqualTo(90)
     }
 
-    //TODO test reduce bilateral factor function
-    //TODO test that multiple hits clear the bilateral sum
+    @Test
+    fun `calculateBilateralKicker, given pair of ratings in decision B, returns expected`() {
+        val left = Rating(Bilateral.RIGHT_LEG, AwardPercentage.TWENTY, 1)
+        val right = Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN, 1)
+
+        assertThat(subject.calculateBilateralKicker(left, right)).isEqualTo(2.8)
+    }
+
+    @Test
+    fun `huntForBilaterals, given all bilaterals in decision A, returns expected`() {
+        val input = listOf(
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.FIFTY, 1),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN, 1),
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.THIRTY, 2),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN, 2)
+        )
+
+        assertThat(subject.huntForBilaterals(input)).isEqualTo(9.2)
+    }
+
+    @Test
+    fun `huntForBilaterals, given non-matching IDs, returns zero`() {
+        val input = listOf(
+            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY, 1),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.FIFTY, 2)
+        )
+
+        assertThat(subject.huntForBilaterals(input)).isEqualTo(0.0)
+    }
+
+    @Test
+    fun `huntForBilaterals, given IDs equal zero, returns zero`() {
+        val input = listOf(
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.FIFTY, 0),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN, 0),
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.THIRTY, 0),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN, 0)
+        )
+
+        assertThat(subject.huntForBilaterals(input)).isEqualTo(0.0)
+    }
 }
