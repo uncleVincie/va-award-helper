@@ -4,6 +4,7 @@ import com.vincie.model.CombinedRatingsTable
 import com.vincie.model.Rating
 import java.io.File
 import java.io.FileWriter
+import kotlin.math.min
 import kotlin.math.round
 import kotlin.math.roundToInt
 
@@ -83,7 +84,7 @@ class CombinedRatingService(
         }
         reportBuffer.add("Adding sum of all bilateral factors ($bilateralSum)")
         currentRating += bilateralSum.roundToInt()
-        val finalRoundedRating = finalRounding(currentRating)
+        val finalRoundedRating = finalRounding(min(100, currentRating))
         reportBuffer.add("To final rating of $finalRoundedRating")
         writeReportBuffer()
         return finalRoundedRating

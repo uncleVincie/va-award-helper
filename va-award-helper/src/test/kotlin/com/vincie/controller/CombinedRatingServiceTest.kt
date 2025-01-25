@@ -195,6 +195,20 @@ class CombinedRatingServiceTest {
     }
 
     @Test
+    fun `calculateFinalRating, given ratings totaling over 100, returns 100`() {
+        val input = listOf(
+            Rating(Bilateral.LEFT_ARM, AwardPercentage.SEVENTY, 1),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.FIFTY, 1),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.SEVENTY, 2),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.FIFTY, 2),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.SEVENTY, 3),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.FIFTY, 3)
+        )
+
+        assertThat(subject.calculateFinalRating(input)).isEqualTo(100)
+    }
+
+    @Test
     fun `calculateBilateralKicker, given pair of ratings in decision B, returns expected`() {
         val left = Rating(Bilateral.RIGHT_LEG, AwardPercentage.TWENTY, 1)
         val right = Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN, 1)
