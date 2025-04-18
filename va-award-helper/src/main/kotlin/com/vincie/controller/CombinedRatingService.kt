@@ -1,5 +1,6 @@
 package com.vincie.controller
 
+import com.vincie.model.BilateralData
 import com.vincie.model.CombinedRatingsTable
 import com.vincie.model.Rating
 import java.io.File
@@ -8,7 +9,7 @@ import kotlin.math.min
 import kotlin.math.round
 import kotlin.math.roundToInt
 
-private const val BILATERAL_MULT = 1.10
+private const val BILATERAL_MULT = 0.10
 
 class CombinedRatingService(
     private val ratingsTable: CombinedRatingsTable
@@ -26,14 +27,17 @@ class CombinedRatingService(
      * takes a pair of ratings, orders them by severity, combines their ratings, then multiplies by the bilateral factor.
      * @return the bilateral multiplier percentage points as a double
      */
-    fun calculateBilateralKicker(left: Rating, right: Rating): Double {
+    fun calculateBilateralKicker(left: Rating, right: Rating): BilateralData {
         reportBuffer.add("Calculating bilateral factor for $left and $right")
         val orderedRatings = orderBySeverity(listOf(left, right))
         val combinedRating = ratingsTable.combineRating(orderedRatings[0].awardPercentage.value, orderedRatings[1].awardPercentage) ?: 0
         reportBuffer.add("Combined rating for this bilateral pair WITHOUT multiplier is $combinedRating")
-        val bilateralPoints = round(combinedRating*(BILATERAL_MULT-1)*10)/10
+        val bilateralPoints = round(combinedRating*BILATERAL_MULT*10)/10
         reportBuffer.add("Bilateral factor gives an extra $bilateralPoints %")
-        return bilateralPoints
+        return BilateralData(
+            bilateralKicker = bilateralPoints,
+            currentRating = combinedRating
+        )
     }
 
     /**
@@ -41,6 +45,7 @@ class CombinedRatingService(
      */
     fun huntForBilaterals(input: List<Rating>): Double {
         var bilateralSum = 0.0
+        var ableBodyPercentage = 1.0
 
         val validBilaterals = input.filter { it.bilateralId > 0 }
         val alreadyProcessed = mutableListOf<Int>()
@@ -48,7 +53,9 @@ class CombinedRatingService(
             if (!alreadyProcessed.contains(rating.bilateralId)) {
                 val match: Rating = validBilaterals.last { it.bilateralId == rating.bilateralId }
                 if (match != rating) {
-                    bilateralSum += calculateBilateralKicker(rating, match)
+                    val bilateralData = calculateBilateralKicker(rating, match)
+                    bilateralSum += round(bilateralData.bilateralKicker * ableBodyPercentage * 10)/10
+                    ableBodyPercentage -= bilateralData.currentRating/100.0 //decreases the award for subsequent bilaterals
                 }
                 alreadyProcessed.add(match.bilateralId)
             }

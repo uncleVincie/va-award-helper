@@ -195,6 +195,27 @@ class CombinedRatingServiceTest {
     }
 
     @Test
+    fun `calculateFinalRating, real-world rating decision C, returns 90`() {
+
+        val input = listOf(
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.FIFTY),
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.THIRTY),
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.TWENTY),
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.TEN),
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.TEN),
+            Rating(Bilateral.NON_BILATERAL, AwardPercentage.TEN),
+            Rating(Bilateral.LEFT_ARM, AwardPercentage.TWENTY, 1),
+            Rating(Bilateral.RIGHT_ARM, AwardPercentage.TWENTY, 1),
+            Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN, 2),
+            Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN, 2)
+        )
+
+        val actual = subject.calculateFinalRating(input)
+        subject.printReport()
+        assertThat(actual).isEqualTo(90)
+    }
+
+    @Test
     fun `calculateFinalRating, given ratings totaling over 100, returns 100`() {
         val input = listOf(
             Rating(Bilateral.LEFT_ARM, AwardPercentage.SEVENTY, 1),
@@ -213,7 +234,7 @@ class CombinedRatingServiceTest {
         val left = Rating(Bilateral.RIGHT_LEG, AwardPercentage.TWENTY, 1)
         val right = Rating(Bilateral.LEFT_LEG, AwardPercentage.TEN, 1)
 
-        assertThat(subject.calculateBilateralKicker(left, right)).isEqualTo(2.8)
+        assertThat(subject.calculateBilateralKicker(left, right).bilateralKicker).isEqualTo(2.8)
     }
 
     @Test
@@ -225,7 +246,7 @@ class CombinedRatingServiceTest {
             Rating(Bilateral.RIGHT_LEG, AwardPercentage.TEN, 2)
         )
 
-        assertThat(subject.huntForBilaterals(input)).isEqualTo(9.2)
+        assertThat(subject.huntForBilaterals(input)).isEqualTo(7.2)
     }
 
     @Test
