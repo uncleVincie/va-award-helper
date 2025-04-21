@@ -197,7 +197,9 @@ class VaAwardHelperScene(
     private fun createClearAllButton(): Node {
         return Button("Clear All").also {
             it.setOnAction { evt ->
+                currentBilateralId = 1
                 ratings.clear()
+                finalRating.set(0)
             }
         }
     }
