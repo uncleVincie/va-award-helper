@@ -6,6 +6,8 @@ import com.vincie.model.CombinedRatingsTable
 import com.vincie.model.Rating
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 
 class CombinedRatingServiceTest {
 
@@ -270,4 +272,19 @@ class CombinedRatingServiceTest {
 
         assertThat(subject.huntForBilaterals(input)).isEqualTo(0.0)
     }
+
+    @ParameterizedTest
+    @CsvSource(
+        "90, TEN, 5",
+        "89, TEN, 6",
+        "89, TWENTY, 4",
+        "66, THIRTY, 6",
+        "95, TEN, 0",
+        "94, TEN, 1",
+        "105, TEN, 0"
+    )
+    fun `forecastOneHundred, given X final rating and Y percent guidance, returns Z`(startingCombined: Int, awardGuidance: AwardPercentage, expected: Int) {
+        assertThat(subject.forecastOneHundred(startingCombined, awardGuidance)).isEqualTo(expected)
+    }
+
 }
