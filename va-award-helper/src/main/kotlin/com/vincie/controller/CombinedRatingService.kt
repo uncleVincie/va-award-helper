@@ -11,8 +11,8 @@ import kotlin.math.round
 import kotlin.math.roundToInt
 
 private const val BILATERAL_MULT = 0.10
-
 private const val REPORT_SECTION_DELIMITER = "-------"
+private const val MIN_FULL_RATING = 95
 
 class CombinedRatingService(
     private val ratingsTable: CombinedRatingsTable
@@ -105,7 +105,7 @@ class CombinedRatingService(
 
         var newCombined = startingCombined
         var additionalAwardCount = 0
-        while (newCombined < 95) {
+        while (newCombined < MIN_FULL_RATING) {
             newCombined = ratingsTable.combineRating(newCombined, additionalAwardLevel) ?: 100
             additionalAwardCount++
         }
@@ -114,7 +114,7 @@ class CombinedRatingService(
 
     fun findOneHundredCombinations(currentRating: Int) {
 
-        if (currentRating >= 95) return
+        if (currentRating >= MIN_FULL_RATING) return
 
         reportBuffer.add("\n${REPORT_SECTION_DELIMITER}ADDITIONAL RATINGS REQUIRED TO GET TO 100%${REPORT_SECTION_DELIMITER}")
         for (awardPercentage in AwardPercentage.entries) {
@@ -127,7 +127,7 @@ class CombinedRatingService(
         }
     }
 
-    private fun writeReportBuffer() {
+    fun writeReportBuffer() {
         finalReport = reportBuffer.toList()
         reportBuffer.clear()
     }

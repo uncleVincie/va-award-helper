@@ -137,7 +137,17 @@ class CombinedRatingServiceTest {
             "New combined rating = 43, from adding Rating(bilateral=NON_BILATERAL, awardPercentage=TEN, bilateralId=0)",
             "Adding sum of all bilateral factors (3.7)",
             "Rounding from actual rating of 47",
-            "To final rating of 50"
+            "To final rating of 50",
+            "\n-------ADDITIONAL RATINGS REQUIRED TO GET TO 100%-------",
+            "TEN: 21",
+            "TWENTY: 11",
+            "THIRTY: 7",
+            "FORTY: 5",
+            "FIFTY: 4",
+            "SIXTY: 3",
+            "SEVENTY: 2",
+            "EIGHTY: 2",
+            "NINETY or higher: 1"
         )
     }
 
@@ -160,7 +170,17 @@ class CombinedRatingServiceTest {
             "First rating (most severe) = Rating(bilateral=NON_BILATERAL, awardPercentage=SEVENTY, bilateralId=0)",
             "Adding sum of all bilateral factors (0.0)",
             "Rounding from actual rating of 70",
-            "To final rating of 70"
+            "To final rating of 70",
+            "\n-------ADDITIONAL RATINGS REQUIRED TO GET TO 100%-------",
+                    "TEN: 16",
+                    "TWENTY: 8",
+                    "THIRTY: 5",
+                    "FORTY: 4",
+                    "FIFTY: 3",
+                    "SIXTY: 2",
+                    "SEVENTY: 2",
+                    "EIGHTY: 2",
+                    "NINETY or higher: 1"
         )
     }
 
@@ -285,6 +305,32 @@ class CombinedRatingServiceTest {
     )
     fun `forecastOneHundred, given X final rating and Y percent guidance, returns Z`(startingCombined: Int, awardGuidance: AwardPercentage, expected: Int) {
         assertThat(subject.forecastOneHundred(startingCombined, awardGuidance)).isEqualTo(expected)
+    }
+
+    @Test
+    fun `findOneHundredCombinations, given 90 currentRating, adds expected to buffer`() {
+
+        val thisSubject = CombinedRatingService(CombinedRatingsTable())
+        thisSubject.findOneHundredCombinations(90)
+        thisSubject.writeReportBuffer()
+
+        assertThat(thisSubject.finalReport).containsExactly(
+            "\n-------ADDITIONAL RATINGS REQUIRED TO GET TO 100%-------",
+                    "TEN: 5",
+                    "TWENTY: 3",
+                    "THIRTY: 2",
+                    "FORTY: 2",
+                    "FIFTY or higher: 1"
+        )
+    }
+
+    @Test
+    fun `findOneHunderdCombinations, given 95 currentRatings, adds nothing to buffer`() {
+        val thisSubject = CombinedRatingService(CombinedRatingsTable())
+        thisSubject.findOneHundredCombinations(95)
+        thisSubject.writeReportBuffer()
+
+        assertThat(thisSubject.finalReport).isEmpty()
     }
 
 }
